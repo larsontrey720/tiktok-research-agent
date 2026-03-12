@@ -1,5 +1,3 @@
 {
-  "框架": "hono",
-  "buildCommand": "npm install",
-  "installCommand": "npm install"
+  "framework": "hono"
 }
