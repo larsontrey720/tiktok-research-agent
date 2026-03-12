@@ -1,0 +1,13 @@
+{
+  "name": "tiktok-research-agent-api",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "start": "vercel start"
+  },
+  "dependencies": {
+    "hono": "^4.0.0"
+  }
+}
