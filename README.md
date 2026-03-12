@@ -1,43 +1,19 @@
 # TikTok Research Agent API
 
-A research-to-brief pipeline that analyzes TikTok videos and generates creative briefs. Built with Hono, deployable to Vercel.
+A research-to-brief pipeline that analyzes TikTok videos and generates creative briefs using MiniMax AI via Zo API.
 
-## What It Does
+## Two Hosting Options
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Health check |
-| `/api/analyze` | POST | Analyze TikTok videos |
-| `/api/brief` | POST | Generate creative brief |
+### Option 1: zo.space (Recommended - No Setup)
 
-## Quick Deploy
-
-### Option 1: Vercel CLI
+Your API is already live at: **https://georgeo.zo.space/api/tiktok**
 
 ```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Clone and deploy
-git clone https://github.com/larsontrey720/tiktok-research-agent.git
-cd tiktok-research-agent
-vercel deploy --prod
-```
-
-### Option 2: Vercel Dashboard
-
-1. Go to [vercel.com/new](https://vercel.com/new)
-2. Import `larsontrey720/tiktok-research-agent`
-3. Deploy
-
-## API Usage
-
-### Analyze Videos
-
-```bash
-curl -X POST https://your-project.vercel.app/api/analyze \
+# Analyze videos
+curl -X POST https://georgeo.zo.space/api/tiktok \
   -H "Content-Type: application/json" \
   -d '{
+    "action": "analyze",
     "videos": [
       {
         "id": "123456789",
@@ -50,136 +26,135 @@ curl -X POST https://your-project.vercel.app/api/analyze \
       }
     ]
   }'
+
+# Generate brief
+curl -X POST https://georgeo.zo.space/api/tiktok \
+  -H "Content-Type: application/json" \
+  -d '{
+    "action": "brief",
+    "clientName": "YourBrand",
+    "analyses": [...],
+    "brandBible": {"brandVoice": "confident", "targetAudience": "Women 18-34"}
+  }'
+```
+
+### Option 2: Vercel (Self-Hosted)
+
+```bash
+git clone https://github.com/larsontrey720/tiktok-research-agent.git
+cd tiktok-research-agent/api
+vercel deploy --prod
+```
+
+Then add `ZO_CLIENT_IDENTITY_TOKEN` as an environment variable in Vercel.
+
+## API Reference
+
+### Single Endpoint: POST /api/tiktok
+
+Pass `action` in the body to choose what to do.
+
+#### Action: analyze
+
+```json
+{
+  "action": "analyze",
+  "videos": [
+    {
+      "id": "string",
+      "url": "string", 
+      "description": "string",
+      "likes": number,
+      "comments": number,
+      "shares": number,
+      "views": number
+    }
+  ]
+}
 ```
 
 **Response:**
 ```json
 {
   "timestamp": "2026-03-12T...",
+  "action": "analyze",
   "analyzedCount": 1,
-  "analyses": [
-    {
-      "id": "123456789",
-      "url": "...",
-      "hook": {
-        "type": "informational",
-        "strength": "high",
-        "analysis": "..."
-      },
-      "content": {
-        "format": "tutorial",
-        "pacing": "medium",
-        "visualStyle": "authentic"
-      },
-      "engagement": {
-        "likes": 100000,
-        "comments": 5000,
-        "shares": 2000,
-        "views": 500000,
-        "engagementRate": 20.14
-      },
-      "themes": ["skincare", "beauty"],
-      "sentiment": "positive"
-    }
-  ],
-  "summary": {
-    "totalViews": 500000,
-    "avgEngagement": 20.14
+  "analyses": [{
+    "id": "123456789",
+    "hook": {"type": "list", "strength": "high", "analysis": "..."},
+    "content": {"format": "tutorial", "pacing": "medium", "visualStyle": "polished"},
+    "engagement": {"likes": 100000, "comments": 5000, "shares": 2000, "views": 500000, "engagementRate": 20.14},
+    "themes": ["skincare", "beauty"],
+    "sentiment": "positive",
+    "audienceQuestions": ["What products?", "How long?"]
+  }],
+  "summary": {"totalViews": 500000, "avgEngagement": 20.14}
+}
+```
+
+#### Action: brief
+
+```json
+{
+  "action": "brief",
+  "clientName": "YourBrand",
+  "analyses": [...],  // Output from analyze action
+  "brandBible": {
+    "brandVoice": "confident",
+    "targetAudience": "Women 18-34"
   }
 }
 ```
 
-### Generate Brief
-
-```bash
-curl -X POST https://your-project.vercel.app/api/brief \
-  -H "Content-Type: application/json" \
-  -d '{
-    "clientName": "YourBrand",
-    "analyses": [
-      {
-        "id": "123456789",
-        "url": "https://www.tiktok.com/@username/video/123456789",
-        "hook": {"type": "informational", "strength": "high"},
-        "content": {"format": "tutorial", "pacing": "medium"},
-        "engagement": {"views": 500000, "likes": 100000, "comments": 5000, "shares": 2000, "engagementRate": 20.14},
-        "themes": ["skincare", "beauty"],
-        "sentiment": "positive"
-      }
-    ],
-    "brandBible": {
-      "brandVoice": "confident",
-      "targetAudience": "Young women 18-34"
-    }
-  }'
-```
-
 **Response:**
 ```json
 {
-  "clientName": "YourBrand",
   "timestamp": "2026-03-12T...",
-  "brief": "# Creative Brief\n\n## Project Overview\n- **Client**: YourBrand\n...",
-  "summary": {
-    "totalVideosAnalyzed": 1,
-    "totalViews": 500000,
-    "avgEngagement": 20.14
-  },
-  "topHooks": ["informational"],
-  "recommendedFormats": ["tutorial"],
-  "contentThemes": ["skincare", "beauty"]
+  "action": "brief",
+  "clientName": "YourBrand",
+  "brief": "# Creative Brief\n\n## Executive Summary\n..."
 }
 ```
 
-## Integration with Your App
+## Integration Example
 
 ```javascript
-// Example: Your app sends video data
-const videos = [
-  { id: "1", url: "...", description: "...", likes: 10000, ... }
-];
+const API_URL = "https://georgeo.zo.space/api/tiktok";
 
-const response = await fetch('https://your-api.vercel.app/api/analyze', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ videos })
-});
-
-const { analyses, summary } = await response.json();
-
-// Generate brief
-const briefResponse = await fetch('https://your-api.vercel.app/api/brief', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ 
-    clientName: 'YourBrand', 
-    analyses 
+// Step 1: Analyze videos
+const analyzeRes = await fetch(API_URL, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    action: "analyze",
+    videos: [
+      { id: "1", url: "...", description: "...", likes: 50000, comments: 1000, shares: 500, views: 500000 }
+    ]
   })
 });
+const { analyses, summary } = await analyzeRes.json();
 
-const { brief } = await briefResponse.json();
-console.log(brief);
-```
+// Step 2: Generate brief
+const briefRes = await fetch(API_URL, {
+  method: "POST", 
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    action: "brief",
+    clientName: "MyBrand",
+    analyses,
+    brandBible: { brandVoice: "confident", targetAudience: "Women 18-35" }
+  })
+});
+const { brief } = await briefRes.json();
 
-## Local Development
-
-```bash
-# Install dependencies
-npm install
-
-# Run locally
-npm run dev
-
-# Test
-npm run test
-# or
-curl -X POST http://localhost:3000/api/analyze -H "Content-Type: application/json" -d '{"videos":[{"id":"1","url":"test","description":"test","likes":100,"comments":10,"shares":5,"views":1000}]}'
+console.log(brief); // Full markdown brief
 ```
 
 ## Tech Stack
 
-- [Hono](https://hono.dev) - Web framework
-- [Vercel](https://vercel.com) - Deployment
+- **AI:** MiniMax M2.5 via Zo API
+- **Framework:** Hono
+- **Hosting:** zo.space (built-in) or Vercel
 
 ## License
 
